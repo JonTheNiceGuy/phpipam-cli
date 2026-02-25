@@ -6,11 +6,11 @@ RUN useradd --create-home --shell /bin/bash ipam
 
 WORKDIR /app
 
-COPY pyproject.toml uv.lock ./
-RUN uv sync --frozen --no-dev
-
-COPY src/ src/
+COPY --chown=ipam pyproject.toml uv.lock ./
 
 USER ipam
+RUN uv sync --frozen --no-dev
+
+COPY --chown=ipam src/ src/
 
 ENTRYPOINT ["uv", "run", "ipam"]
