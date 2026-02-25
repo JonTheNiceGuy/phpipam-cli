@@ -1,0 +1,38 @@
+#!/bin/bash
+set -euo pipefail
+
+IMAGE_TAG="${IMAGE_TAG:-latest}"
+IMAGE_ID="ghcr.io/jontheniceguy/phpipam-cli:${IMAGE_TAG}"
+DEBUG="${DEBUG:-}"
+IPAM_CONFIG="${IPAM_CONFIG:-$HOME/.ipam/config}"
+
+debug() {
+  if [[ -n "$DEBUG" ]]
+  then
+    echo "[DEBUG] $*" >&2
+  fi
+}
+
+if [[ -n "${DEBUG}" ]]
+then
+  docker pull "$IMAGE_ID"
+else
+  docker pull "$IMAGE_ID" >/dev/null
+fi
+
+debug "IMAGE_ID: $IMAGE_ID"
+debug "IPAM_CONFIG: $IPAM_CONFIG"
+debug "IPAM_PROFILE: ${IPAM_PROFILE:-default}"
+
+# Mount the config file into the container if it exists
+MOUNT_ARGS=()
+if [[ -f "$IPAM_CONFIG" ]]; then
+  debug "Mounting config file: $IPAM_CONFIG -> /home/ipam/.ipam/config"
+  MOUNT_ARGS=(-v "$IPAM_CONFIG:/home/ipam/.ipam/config:ro")
+fi
+
+exec docker run --rm \
+  "${MOUNT_ARGS[@]}" \
+  -e "IPAM_PROFILE=${IPAM_PROFILE:-}" \
+  -e "DEBUG=${DEBUG:-}" \
+  "$IMAGE_ID" "$@"
