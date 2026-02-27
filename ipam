@@ -24,11 +24,12 @@ debug "IMAGE_ID: $IMAGE_ID"
 debug "IPAM_CONFIG: $IPAM_CONFIG"
 debug "IPAM_PROFILE: ${IPAM_PROFILE:-default}"
 
-# Mount the config file into the container if it exists
+# Mount the config directory into the container
+IPAM_CONFIG_DIR="$(dirname "$IPAM_CONFIG")"
 MOUNT_ARGS=()
-if [[ -f "$IPAM_CONFIG" ]]; then
-  debug "Mounting config file: $IPAM_CONFIG -> /home/ipam/.ipam/config"
-  MOUNT_ARGS=(-v "$IPAM_CONFIG:/home/ipam/.ipam/config:ro")
+if [[ -d "$IPAM_CONFIG_DIR" ]]; then
+  debug "Mounting config directory: $IPAM_CONFIG_DIR -> /app/.ipam"
+  MOUNT_ARGS=(-v "$IPAM_CONFIG_DIR:/app/.ipam")
 fi
 
 exec docker run --rm \
