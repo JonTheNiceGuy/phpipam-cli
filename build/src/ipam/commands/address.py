@@ -37,8 +37,9 @@ def address_show(ctx, address_id):
 @click.option("--subnet-id", required=True, help="Subnet ID")
 @click.option("--hostname", default="", help="Hostname")
 @click.option("--description", default="", help="Description")
+@click.option("--firewall-address-object", default=None, help="Firewall address object name")
 @click.pass_context
-def address_add(ctx, ip, subnet_id, hostname, description):
+def address_add(ctx, ip, subnet_id, hostname, description, firewall_address_object):
     """Add a new IP address."""
     client = get_client(ctx)
     payload = {
@@ -47,6 +48,8 @@ def address_add(ctx, ip, subnet_id, hostname, description):
         "hostname": hostname,
         "description": description,
     }
+    if firewall_address_object is not None:
+        payload["firewallAddressObject"] = firewall_address_object
     result = client.post("addresses", data=payload)
     click.echo(f"Address created (id: {result['id']})")
 
@@ -55,8 +58,9 @@ def address_add(ctx, ip, subnet_id, hostname, description):
 @click.argument("address_id")
 @click.option("--hostname", default=None, help="Hostname")
 @click.option("--description", default=None, help="Description")
+@click.option("--firewall-address-object", default=None, help="Firewall address object name")
 @click.pass_context
-def address_update(ctx, address_id, hostname, description):
+def address_update(ctx, address_id, hostname, description, firewall_address_object):
     """Update an address."""
     client = get_client(ctx)
     payload = {}
@@ -64,6 +68,8 @@ def address_update(ctx, address_id, hostname, description):
         payload["hostname"] = hostname
     if description is not None:
         payload["description"] = description
+    if firewall_address_object is not None:
+        payload["firewallAddressObject"] = firewall_address_object
     client.patch("addresses", int(address_id), data=payload)
     click.echo("Address updated.")
 

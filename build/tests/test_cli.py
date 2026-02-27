@@ -4,7 +4,7 @@ import pytest
 from click.testing import CliRunner
 
 from ipam.cli import cli
-from ipam.client import PhpIpamClient
+from ipam.client import PhpIpamClient, PhpIpamError
 
 
 @pytest.fixture
@@ -39,10 +39,11 @@ class TestCliBase:
 
     def test_subcommand_groups_exist(self, runner):
         result = runner.invoke(cli, ["--help"])
-        assert "subnet" in result.output
-        assert "address" in result.output
-        assert "vlan" in result.output
-        assert "profile" in result.output
+        for cmd in ("subnet", "address", "vlan", "profile", "section",
+                     "vrf", "l2domain", "device", "circuit", "nat",
+                     "location", "rack", "nameserver", "tag",
+                     "device-type", "customer"):
+            assert cmd in result.output
 
 
 class TestProfileCommands:
@@ -142,6 +143,30 @@ class TestProfileCommands:
             ["profile", "delete", "nosuch", "--config-file", str(config_file)],
         )
         assert result.exit_code != 0
+
+
+class TestCliErrorHandling:
+    def test_disabled_module_shows_friendly_error(self, runner):
+        with patch("ipam.commands.vlan.get_client") as mock_get:
+            mock_get.return_value.get.side_effect = PhpIpamError(
+                "invalid controller"
+            )
+            result = runner.invoke(
+                cli, ["--profile", "test", "vlan", "list"]
+            )
+            assert result.exit_code != 0
+            assert "not enabled" in result.output.lower()
+
+    def test_api_error_shows_message(self, runner):
+        with patch("ipam.commands.vlan.get_client") as mock_get:
+            mock_get.return_value.get.side_effect = PhpIpamError(
+                "subnet not found"
+            )
+            result = runner.invoke(
+                cli, ["--profile", "test", "vlan", "list"]
+            )
+            assert result.exit_code != 0
+            assert "subnet not found" in result.output
 
 
 class TestCliProfileLoading:

@@ -168,6 +168,29 @@ def _get_token(app_id):
 # Session fixtures
 # ---------------------------------------------------------------------------
 
+def _toggle_module(column, enabled):
+    """Enable or disable a phpIPAM module via the settings table."""
+    _run_sql(
+        f"UPDATE settings SET {column} = {1 if enabled else 0} WHERE id = 1;"
+    )
+
+
+@pytest.fixture
+def toggle_module():
+    """Fixture that provides a function to toggle modules, with auto-restore."""
+    toggled = []
+
+    def _toggle(column, enabled):
+        toggled.append(column)
+        _toggle_module(column, enabled)
+
+    yield _toggle
+
+    # Re-enable all toggled modules after the test
+    for col in toggled:
+        _toggle_module(col, True)
+
+
 @pytest.fixture(scope="session")
 def phpipam_service():
     """Start Docker containers and configure phpIPAM for testing."""

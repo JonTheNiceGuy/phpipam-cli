@@ -73,6 +73,24 @@ class TestAddressAdd:
         )
         assert result.exit_code == 0
 
+    def test_address_add_with_firewall_object(self, runner, mock_client):
+        mock_client.post.return_value = {
+            "code": 201, "success": True, "id": 43, "data": "Address created",
+        }
+        result = runner.invoke(
+            cli,
+            [
+                "--profile", "test",
+                "address", "add",
+                "--ip", "10.0.0.6",
+                "--subnet-id", "1",
+                "--firewall-address-object", "fw-web-01",
+            ],
+        )
+        assert result.exit_code == 0
+        call_data = mock_client.post.call_args[1]["data"]
+        assert call_data["firewallAddressObject"] == "fw-web-01"
+
 
 class TestAddressUpdate:
     def test_address_update(self, runner, mock_client):
@@ -110,6 +128,24 @@ class TestAddressUpdate:
         assert result.exit_code == 0
         mock_client.patch.assert_called_once_with(
             "addresses", 10, data={"description": "New desc"}
+        )
+
+    def test_address_update_firewall_object(self, runner, mock_client):
+        mock_client.patch.return_value = {
+            "code": 200, "success": True, "data": "Address updated",
+        }
+        result = runner.invoke(
+            cli,
+            [
+                "--profile", "test",
+                "address", "update",
+                "10",
+                "--firewall-address-object", "fw-db-01",
+            ],
+        )
+        assert result.exit_code == 0
+        mock_client.patch.assert_called_once_with(
+            "addresses", 10, data={"firewallAddressObject": "fw-db-01"}
         )
 
 

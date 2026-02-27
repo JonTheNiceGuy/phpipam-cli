@@ -1,6 +1,6 @@
 import click
 
-from ipam.client import PhpIpamClient
+from ipam.client import PhpIpamClient, PhpIpamError
 from ipam.config import (
     DEFAULT_CONFIG_PATH,
     delete_profile,
@@ -11,9 +11,39 @@ from ipam.config import (
 from ipam.commands.subnet import subnet
 from ipam.commands.address import address
 from ipam.commands.vlan import vlan
+from ipam.commands.section import section
+from ipam.commands.vrf import vrf
+from ipam.commands.l2domain import l2domain
+from ipam.commands.device import device
+from ipam.commands.circuit import circuit
+from ipam.commands.nat import nat
+from ipam.commands.location import location
+from ipam.commands.rack import rack
+from ipam.commands.nameserver import nameserver
+from ipam.commands.tag import tag
+from ipam.commands.device_type import device_type
+from ipam.commands.customer import customer
 
 
-@click.group()
+class ApiErrorGroup(click.Group):
+    """Click Group that catches PhpIpamError and shows friendly messages."""
+
+    def invoke(self, ctx):
+        try:
+            return super().invoke(ctx)
+        except PhpIpamError as e:
+            msg = str(e)
+            if "controller" in msg.lower():
+                click.echo(
+                    f"Error: This feature is not enabled on the server ({msg})",
+                    err=True,
+                )
+            else:
+                click.echo(f"Error: {msg}", err=True)
+            ctx.exit(1)
+
+
+@click.group(cls=ApiErrorGroup)
 @click.version_option("0.1.0", prog_name="ipam")
 @click.option(
     "--profile",
@@ -46,6 +76,18 @@ def cli(ctx, profile):
 cli.add_command(subnet)
 cli.add_command(address)
 cli.add_command(vlan)
+cli.add_command(section)
+cli.add_command(vrf)
+cli.add_command(l2domain)
+cli.add_command(device)
+cli.add_command(circuit)
+cli.add_command(nat)
+cli.add_command(location)
+cli.add_command(rack)
+cli.add_command(nameserver)
+cli.add_command(tag)
+cli.add_command(device_type)
+cli.add_command(customer)
 
 
 # --- Profile management commands ---
